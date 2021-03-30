@@ -1,0 +1,7 @@
+# mac files
+.DS_Store
+Icon
+
+# user files
+*.txt
+client_secret.json

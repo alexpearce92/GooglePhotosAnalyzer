@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Google Photos Tool</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <div id="top" style='width:100%'>
+        <a href="/">Back</a>
+        <a style="margin-left:50px" href="/clearVisitedCache">Reset Visited Files</a>
+        <a style="margin-left:50px" href="/clearIgnored">Reset Ignored Files</a>
+        <a style="margin-left:50px" href="/refreshDuplicatePhotos">Pull Fresh Google Data</a>
+    </div>
+    <div style='width:60%;float:left;position:relative;'>
+        <h2>Duplicate File Names</h2>
+        Total Files Scanned: {{fileCount}}<br/>
+        Total Potential Duplicates: {{duplicateCount}} ({{ignoredCount}} ignored)<br/>
+        <br/>
+        Click a file name to review more details on the potential duplicates<br/>
+        <br/>
+        {{duplicateHtml | safe}}
+    </div>
+    <div style='width:40%;float:right;position:relative;'>
+        <h2>Lookup File Details</h2>
+        <small>Search will be done by file ID if the file is found in the saved data.</small><br/>
+        {{searchMessage or ""}}
+        {{searchHtml | safe}}
+    </div>  
+    <script>
+        $(function() {
+            $('.file-name-link').click(function() {
+                $(this).css('text-decoration', 'line-through');
+                $('html,body').animate({scrollTop: $("#top").offset().top},'slow');
+            });
+        });
+    </script>
+</body>
+</html>

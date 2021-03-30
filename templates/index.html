@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Google Photos Tool</title>
+</head>
+<body>
+    <table>
+        <h2>Simple Google Photos Tool</h2>
+        Built off of available <a href="https://developers.google.com/photos/library/reference/rest/v1/mediaItems" target="_blank">Google Photos Media API</a><br/>
+        <br/>
+        <label><strong>Message:</strong> {{message or "Everything's OK"}}</label>
+        <br/>
+        <br/>
+        <tr><td style="min-width:200px;"><a href="/duplicatePhotos">Find Duplicate Photos</a></td>
+        <td style="max-width:750px;">Submit an API request to find potential duplicated photos in your photo library by filename. If you don't already have an output file, <strong>the site will appear to be stuck after you log into your Google account</strong> as it queries your entire photo library. You can check the web server logs to see live progress updates.</td></tr>
+        <tr><td style="min-width:200px;"><a href="/clearCache">Clear Saved Data</a></td>
+        <td style="max-width:750px;">Removes saved data so that fresh data can be pulled in for requests.</td></tr>
+        <tr><td style="min-width:200px;"><a href="/authorize">Set credentials</a></td>
+        <td style="max-width:750px;">Separately set access tokens for current user session. Is included in Duplicate Photos request.
+        </td></tr>
+        <tr><td style="min-width:200px;"><a href="/reset">Reset current credentials</a></td>
+        <td style="max-width:750px;">Revoke and clear the access tokens associated with the current user session.
+        </td></tr>
+    </table>
+    <br/>
+    <h3>Requirements</h3>
+    <h4>Google Photos API Authorization</h4>
+    <ol>
+      <li>Create a <a href="https://console.cloud.google.com/">Google Cloud project</a></li>
+      <li>Enable an API then select Google Photos</li>
+      <li>Create OAuth 2.0 credentials for a Web Application. Only required field is the callback, which should be "http://localhost:8080/oauth2callback"</li>
+      <li>Download the credentials file and paste its contents into the client_secret.json for this project</li>
+    </ol>
+    <h4>Python Packages</h4>
+    <ul>
+      <li>flask</li>
+      <li>google_auth_oauthlib</li>
+      <li>google-oauth2</li>
+      <li>google-auth</li>
+      <li>requests</li>
+    </ul>
+    <br/>
+    <h3>Troubleshooting</h3>
+    <h4>Error with expired or missing credentials (google.auth.exceptions.RefreshError)</h4>
+    <span>This is related to an expired cert or otherwise stale credentials. <a href="/reset">Reset your credentials</a> and <a href="/authorize">set them again</a></span><br/>
+</body>
+</html>
