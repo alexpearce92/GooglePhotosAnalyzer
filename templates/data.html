@@ -15,6 +15,12 @@
         <h2>Duplicate File Names</h2>
         Total Files Scanned: {{fileCount}}<br/>
         Total Potential Duplicates: {{duplicateCount}} ({{ignoredCount}} ignored)<br/>
+        <form [action]="url_for('findDuplicatePhotos')" method="post">
+            Ignored Rows: 
+            <input type="submit" name="ignored" value="show"/>
+            <input type="submit" name="ignored" value="hide"/>
+        </form>
+        <br/>
         <br/>
         Click a file name to review more details on the potential duplicates<br/>
         <br/>

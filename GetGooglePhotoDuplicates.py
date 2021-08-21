@@ -1,4 +1,5 @@
 import flask
+from flask import request
 import google_auth_oauthlib.flow
 import google.oauth2.credentials
 import json
@@ -34,6 +35,7 @@ duplicateHtml = ""
 detailedLogging = False
 searchTerm = ""
 searchHtml = ""
+hideIgnored = False
 
 @app.route('/')
 def index():
@@ -41,9 +43,16 @@ def index():
   return flask.render_template('index.html', message=message)
 
 
-@app.route('/duplicatePhotos')
+@app.route('/duplicatePhotos', methods=["POST", "GET"])
 def findDuplicatePhotos():
   global redirect
+  global hideIgnored
+
+  ignored = 'show' if not hideIgnored else 'hide'
+  if request.method == "POST":
+    ignored = request.form['ignored']
+  hideIgnored = ignored == 'hide'
+
   if 'credentials' not in flask.session:
     redirect = 'duplicate'
     return flask.redirect('authorize')
@@ -61,6 +70,7 @@ def getPhotoData(session):
   global searchHtml
   global message
   global ignoredCount
+  global hideIgnored
 
   shouldRefreshFile = forceRefresh
   forceRefresh = False
@@ -145,14 +155,16 @@ def getPhotoData(session):
     isIgnored = name in ignoredFiles
     if isIgnored:
       ignoredCount += 1
-    ignoredStyle = 'opacity:0.25;color:red;text-decoration:line-through;' if isIgnored else ''
-    line = f"<span style='{ignoredStyle}'><a href='/duplicatePhotos/search/{name}' class='file-name-link' style='{visitedStyle}'>{name}</a> - count: {dupeCount}; types: {dupeTypes}</span> <a href='/duplicatePhotos/ignoreFile/{name}' style='margin-left:10px;'>{'Unignore' if isIgnored else 'Ignore'}</a><br/>"
-    outputStr += line
+    
+    if (isIgnored and not hideIgnored) or not isIgnored:
+      ignoredStyle = 'opacity:0.25;color:red;text-decoration:line-through;' if isIgnored else ''  
+      line = f"<span style='{ignoredStyle}'><a href='/duplicatePhotos/search/{name}' class='file-name-link' style='{visitedStyle}'>{name}</a> - count: {dupeCount}; types: {dupeTypes}</span> <a href='/duplicatePhotos/{'unignoreFile' if isIgnored else 'ignoreFile'}/{name}' style='margin-left:10px;'>{'Unignore' if isIgnored else 'Ignore'}</a><br/>"
+      outputStr += line
 
   fileCount=len(files)
   duplicateCount=len(duplicates) - ignoredCount
   duplicateHtml=outputStr
-  return flask.render_template('data.html', ignoredCount=ignoredCount, fileCount=fileCount, duplicateCount=duplicateCount, duplicateHtml=duplicateHtml, searchHtml=searchHtml)
+  return flask.render_template('data.html', ignoredCount=ignoredCount, fileCount=fileCount, duplicateCount=duplicateCount, duplicateHtml=duplicateHtml, searchHtml=searchHtml, hideIgnored=hideIgnored)
 
 def processRawFiles(mediaItems):
   files = {}
@@ -187,6 +199,8 @@ def search(fileName = ""):
   global redirect
   global searchTerm
 
+  print('entering search')
+
   if fileName == "":
     return flask.url_for('findDuplicatePhotos')
   processFileNameClick(fileName)
@@ -194,6 +208,8 @@ def search(fileName = ""):
   searchTerm = fileName if searchTerm == "" else searchTerm
   message = ""
   if 'credentialsSearch' not in flask.session:
+    print('couldnt find credentialsSearch')
+    pprint(flask.session)
     redirect = 'search'
     return flask.redirect('authorize')
 
@@ -262,7 +278,7 @@ def searchForFiles(session):
       f.close()
   isIgnored = fileName and fileName in ignoredFiles
 
-  output = f"<br/>Results for files with the name '{searchTerm}' (<a href='https://photos.google.com/u/1/search/{searchTerm}' target='_blank'>Search term directly in Google Photos</a>): <a href='/duplicatePhotos/ignoreFile/{fileName}' style='margin-left:10px;'>{'Unignore' if isIgnored else 'Ignore'}</a><br/><ul>"
+  output = f"<br/>Results for files with the name '{searchTerm}' (<a href='https://photos.google.com/u/1/search/{searchTerm}' target='_blank'>Search term directly in Google Photos</a>): <a href='/duplicatePhotos/ignoreFile/{searchTerm}' style='margin-left:10px;'>Ignore</a> <a href='/duplicatePhotos/unignoreFile/{searchTerm}' style='margin-left:10px;'>Unignore</a><br/><ul>"
   if isError:
     output += f"<li>{message}</li>"
   else:
@@ -287,6 +303,21 @@ def ignoreFile(fileName = ""):
 
   with open(ignoredFilesFileName, 'a') as f:
     f.write(f"{fileName}\n")
+    f.close()
+  return flask.redirect(flask.url_for('findDuplicatePhotos'))
+
+@app.route('/duplicatePhotos/unignoreFile/<fileName>')
+def unignoreFile(fileName = ""):
+  global ignoredFilesFileName
+  if not ignoredFilesFileName or fileName == "":
+    return flask.redirect(flask.url_for('findDuplicatePhotos'))
+
+  with open(ignoredFilesFileName, "r") as f:
+    lines = f.readlines()
+  with open(ignoredFilesFileName, "w") as f:
+    for line in lines:
+      if line.strip("\n") != fileName:
+        f.write(line)
     f.close()
   return flask.redirect(flask.url_for('findDuplicatePhotos'))
 
